@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 #include <tchar.h>
+#include <iomanip>
+#include <bitset>
 
 int main() {
     SCARDCONTEXT context;
@@ -40,22 +42,25 @@ int main() {
         io_request = *SCARD_PCI_T1;
     }
 
-    BYTE packet[] = {0xFF, 0x70, 0x07, 0x6B, 0x00};
+    BYTE uid_packet[] = {0xFF, 0xCA, 0x00, 0x00, 0x00};
+    BYTE vendor_packet[] = {0xFF, 0x70, 0x07, 0x6B, 0x00};
     DWORD packet_size = 5;
-    BYTE response[64];
+    BYTE response[32];
     DWORD response_size;
 
-    result = SCardTransmit(handle, &io_request, packet, packet_size, NULL, response, &response_size);
+    result = SCardTransmit(handle, &io_request, uid_packet, packet_size, NULL, response, &response_size);
     if(result != SCARD_S_SUCCESS) {
         std::cerr << "Failed to transmit to card...\n";
         return 1;
     }
 
-    std::string response_string;
+    std::string bitString = "";
     for(int i = 0; i < response_size; i++) {
-        response_string += std::to_string(response[i]);
-        response_string += " ";
+        bitString = bitString + (std::bitset<8>(response[i])).to_string();
     }
-    std::cout << response_string;
+
+    std::bitset<32> idBits = std::bitset<32>(bitString.substr(2,32));
+
+    std::cout << std::hex << std::nouppercase << idBits.to_ulong();
 
 }
